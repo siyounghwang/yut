@@ -377,6 +377,7 @@ select option[class*="cg-"]{background:color-mix(in srgb,var(--cg) 22%,var(--sur
 .ovr input{accent-color:var(--hong)}
 .ovr:has(input:checked){background:var(--hong);color:#fff}
 .ovr:has(input:checked) input{accent-color:#fff}
+.gc header .stn,.gc header .stn-one{font-weight:700;font-size:14px;color:var(--ink)}
 .nm-h{grid-column:1/-1;font-size:12px;font-weight:600;color:var(--muted);margin-top:8px}
 .nm-h:first-child{margin-top:0}
 .chip.res{background:var(--hwang-soft);color:var(--hwang)}
@@ -458,8 +459,10 @@ select option[class*="cg-"]{background:color-mix(in srgb,var(--cg) 22%,var(--sur
           <div class="field"><span class="lab" id="lb-ensz">Teams per game</span><div class="seg" id="seg-ensz" role="group" aria-labelledby="lb-ensz"><button type="button" data-action="el-ensz" data-v="3" aria-pressed="false">3</button><button type="button" data-action="el-ensz" data-v="4" aria-pressed="false">4</button></div><small id="el-ensz-hint"></small></div>
           <label class="cat-sp" style="grid-column:2/-1;margin:0"><input type="checkbox" id="el-enbonus">If round 1 has 3 games, the top-ranked game sends its top 2, so the final has 4 teams</label></div>
         <div class="elx-row"><span class="elx-n">2</span><div class="field"><label for="el-res">Teams in the Resurrection</label><input id="el-res" type="number" min="0" inputmode="numeric"><small id="el-res-hint"></small></div>
-          <div class="field"><span class="lab" id="lb-ressz">Teams per game</span><div class="seg" id="seg-ressz" role="group" aria-labelledby="lb-ressz"><button type="button" data-action="el-ressz" data-v="3" aria-pressed="false">3</button><button type="button" data-action="el-ressz" data-v="4" aria-pressed="false">4</button></div><small id="el-ressz-hint"></small></div></div>
-        <div class="elx-row"><span class="elx-n">3</span><div class="field"><span class="lab">Byes <small>(the rest, straight to the semifinals)</small></span><div class="val" id="el-b"></div><small id="el-b-hint"></small></div></div>
+          <div class="field"><span class="lab" id="lb-ressz">Teams per game</span><div class="seg" id="seg-ressz" role="group" aria-labelledby="lb-ressz"><button type="button" data-action="el-ressz" data-v="3" aria-pressed="false">3</button><button type="button" data-action="el-ressz" data-v="4" aria-pressed="false">4</button></div><small id="el-ressz-hint"></small></div>
+          <label class="cat-sp" style="grid-column:2/-1;margin:0"><input type="checkbox" id="el-resbonus">The top-ranked Resurrection game sends its top 2 (only use this if the semifinals need it)</label></div>
+        <div class="elx-row"><span class="elx-n">3</span><div class="field"><span class="lab">Byes <small>(the rest, straight to the semifinals)</small></span><div class="val" id="el-b"></div><small id="el-b-hint"></small></div>
+          <label class="cat-sp" style="grid-column:2/-1;margin:0"><input type="checkbox" id="el-sembonus">If the semifinals have 3 games, the top-ranked one sends its top 2, so the final has 4 teams</label></div>
       </div>
       <div class="elx-flow" id="el-flow"></div>
       <div class="actions" id="el-rec" style="margin-top:14px"></div>
@@ -776,19 +779,20 @@ var _def={};
 function elimDefaults(N){
   if(_def[N]!==undefined)return _def[N];
   var best=null,tB=N*0.31,tR=N*0.38,tE=N*0.31;
-  for(var B=0;B<=N;B++)for(var W=1;3*W<=N-B;W++)for(var R=3*W;R<=Math.min(4*W,N-B);R++){
-    var E=N-B-R,main=ladder(B+W);if(!main)continue;
+  for(var rb=0;rb<=1;rb++)for(var B=0;B<=N;B++)for(var W=1;3*W<=N-B;W++)for(var R=3*W;R<=Math.min(4*W,N-B);R++){
+    var E=N-B-R,main=ladder(B+W+rb);if(!main)continue;
     var en=E===0?[]:ladder(E);if(!en)continue;
     var res=splitEven(R,W);
     var c=(B-tB)*(B-tB)+(R-tR)*(R-tR)+(E-tE)*(E-tE)+0.5*oddGames(res);
     c+=main.reduce(function(a,x){return a+60*oddGames(x);},0)+en.reduce(function(a,x){return a+60*oddGames(x);},0);
     c+=main.slice(0,-1).reduce(function(a,x){return a+x.filter(function(v){return v===3;}).length;},0)*1.5;
     if(E===0)c+=40;if(main.length===1)c+=20;
-    if(main[main.length-1][0]!==4)c+=90;
+    if(main[main.length-1][0]!==4)c+=bonusOK(main)?14:90;
+    if(rb)c+=14;
     if(en.length&&en[en.length-1][0]!==4&&!bonusOK(en))c+=8;
     if(N>=20&&en.length===1)c+=50;
     if(E>R)c+=(E-R)*4;
-    if(!best||c<best.c)best={c:c,B:B,R:R,W:W,E:E};
+    if(!best||c<best.c)best={c:c,B:B,R:R,W:W,E:E,rb:rb};
   }
   _def[N]=best;return best;
 }
@@ -808,9 +812,10 @@ function stagesFor(n,size){
 function bonusOK(stages){var n=stages.length;return n>=2&&stages[n-1].length===1&&stages[n-1][0]===3&&stages[n-2].length===3;}
 function planFrom(stages,opt){
   stages=stages.map(function(x){return x.slice();});
-  var bonus=!!(opt&&opt.bonus&&bonusOK(stages));
+  var first=!!(opt&&opt.first&&stages.length>=2);
+  var bonus=!!(opt&&opt.bonus&&bonusOK(stages)&&!(first&&stages.length===2));
   if(bonus)stages[stages.length-1]=[4];
-  return{bonus:bonus,main:stages.map(function(sz,i){var p=sz.reduce(function(a,x){return a+x;},0),last=i===stages.length-1,bz=bonus&&i===stages.length-2,adv=last?0:sz.length+(bz?1:0);
+  return{bonus:bonus,first:first,main:stages.map(function(sz,i){var p=sz.reduce(function(a,x){return a+x;},0),last=i===stages.length-1,bz=!last&&((bonus&&i===stages.length-2)||(first&&i===0)),adv=last?0:sz.length+(bz?1:0);
     return{p:p,sizes:sz,a:last?0:1,adv:adv,drop:last?0:p-adv,advPer:bz?sz.map(function(_,gi){return gi===0?2:1;}):null};}),lb:[],sig:'fixed',score:0};
 }
 /* ===== END LOGIC ===== */
@@ -1062,7 +1067,7 @@ function applyDefaults(N){
   var d=elimDefaults(N);
   if(!d){S.elim.fmt={N:N,B:0,R:N,E:0,W:Math.max(1,Math.ceil(N/4)),resSize:4,enSize:3};return;}
   var el=d.E?ladder(d.E):null,ek=el&&el.length>1?el[0].length:0;
-  S.elim.fmt={N:N,B:d.B,R:d.R,E:d.E,W:d.W,resSize:d.R/d.W>=3.5?4:3,enSize:ek&&d.E/ek>=3.5?4:3};
+  S.elim.fmt={N:N,B:d.B,R:d.R,E:d.E,W:d.W,resSize:d.R/d.W>=3.5?4:3,enSize:ek&&d.E/ek>=3.5?4:3,resBonus:!!d.rb,semBonus:true};
 }
 function normalizeElim(){
   var E=S.elim,N=fieldN();
@@ -1124,7 +1129,8 @@ function moveTie(team,dir){
 }
 
 /* ---------- elimination planning ---------- */
-function fmtMain(){var f=S.elim.fmt;if(!f||f.B<0||!f.W)return null;var res=splitEven(f.R,f.W),lad=ladder(f.B+f.W);return res&&lad?[res].concat(lad):null;}
+function rbOf(f){return f&&f.resBonus?1:0;}
+function fmtMain(){var f=S.elim.fmt;if(!f||f.B<0||!f.W)return null;var res=splitEven(f.R,f.W),lad=ladder(f.B+f.W+rbOf(f));return res&&lad?[res].concat(lad):null;}
 function elimCfg(){
   var f=S.elim.fmt||{B:0,R:0},st=fmtMain();
   return{T:f.B+f.R,B:f.B,R:st?st.length:3,S:4,dbl:false,X:0,pins:[],lbPins:[],j:0,resur:true,pre:'M',base:0,arrange:true};
@@ -1134,7 +1140,7 @@ function enoshCfg(){
   return{T:E,B:0,R:st?st.length:2,S:3,dbl:false,X:0,pins:[],lbPins:[],j:0,resur:false,pre:'E',base:f.B+f.R,arrange:true};
 }
 function enCtx(){var f=S.elim.fmt||{},cfg=enoshCfg(),st=cfg.T&&(f.B==null||f.B>=0)?stagesFor(cfg.T,f.enSize||3):null,plan=st?planFrom(st,{bonus:f.enBonus!==false}):null;return{cfg:cfg,plans:plan?[plan]:[],plan:plan};}
-function planCtx(){var cfg=elimCfg(),st=fmtMain(),plan=st?planFrom(st):null;return{cfg:cfg,plans:plan?[plan]:[],plan:plan};}
+function planCtx(){var f=S.elim.fmt||{},cfg=elimCfg(),st=fmtMain(),plan=st?planFrom(st,{first:!!f.resBonus,bonus:f.semBonus!==false}):null;return{cfg:cfg,plans:plan?[plan]:[],plan:plan};}
 function describePlan(p,cfg){
   var adv=p.main.slice(0,-1).map(function(m){return'top '+m.a;});
   var s=adv.length?('Advance '+adv.join(' → ')+', then a final of '+p.main[p.main.length-1].p):('One game of '+p.main[0].p);
@@ -1426,9 +1432,9 @@ function rrCard(g,dn){
       var used=res.some(function(y,q){return y===x&&q!==p;});
       return'<option class="cg-'+(teamGroups()[x]||'x')+'" value="'+x+'"'+(t===x?' selected':'')+(used?' disabled':'')+'>'+esc(teamName(x))+'</option>';
     }).join('');
-    return'<div class="prow"><span class="pl">'+ordinal(p+1)+'</span><select class="'+(t!=null?'cgsel cg-'+(teamGroups()[t]||'x'):'')+'" data-action="rr-set" data-game="'+g.id+'" data-place="'+p+'" data-fid="rr-'+g.id+'-'+p+'" aria-label="'+ordinal(p+1)+' place, game '+dn+'"><option value="">Choose team…</option>'+opts+'</select><span class="pt">'+(t!=null?'+'+fmtP(pts(p,g.teams.length)*rrWeight(g.round)):'')+'</span></div>';
+    return'<div class="prow"><span class="pl">'+ordinal(p+1)+'</span><select class="'+(t!=null?'cgsel cg-'+(teamGroups()[t]||'x'):'')+'" data-action="rr-set" data-game="'+g.id+'" data-place="'+p+'" data-fid="rr-'+g.id+'-'+p+'" aria-label="'+ordinal(p+1)+' place, board '+(boardOf[g.id]||dn)+'"><option value="">Choose team…</option>'+opts+'</select><span class="pt">'+(t!=null?'+'+fmtP(pts(p,g.teams.length)*rrWeight(g.round)):'')+'</span></div>';
   }).join('');
-  return'<article class="gc'+(done?' done':'')+(ui.rrEdit&&hasR?' lockd':'')+'"><header><span class="gh"><b>Game '+dn+'</b>'+boardSelect(g.id)+'</span><span class="stat">'+(done?'Scored':any?'In progress':'Not played')+'</span></header><div class="pills">'+pills+'</div>'+rows+(any?'<button class="link" data-action="rr-clear" data-game="'+g.id+'">Clear</button>':'')+'</article>';
+  return'<article class="gc'+(done?' done':'')+(ui.rrEdit&&hasR?' lockd':'')+'"><header><span class="gh">'+boardSelect(g.id)+'</span><span class="stat">'+(done?'Scored':any?'In progress':'Not played')+'</span></header><div class="pills">'+pills+'</div>'+rows+(any?'<button class="link" data-action="rr-clear" data-game="'+g.id+'">Clear</button>':'')+'</article>';
 }
 function cfgR0(){return S.rr.cfg||{N:S.numTeams,G:S.rrSize,R:S.rrRounds};}
 function renderRR(){
@@ -1542,7 +1548,7 @@ function renderDispBracket(){
     if(fin)colR+=sec(title,rd.games,2,true,'Champion','M'+rd.round);else colM+=sec(title,rd.games,1,false,null,'M'+rd.round);
   });
   var byes=br.main[0].byes||[],resG=br.main[0].games,adv=byes.map(function(t){return'<span>'+esc(teamName(t))+'</span>';});
-  resG.forEach(function(g){adv.push(g.complete?'<span class="w">'+esc(teamName(g.result[0]))+'</span>':'<span class="p">Winner of board '+(boardOf[g.id]||'?')+'</span>');});
+  resG.forEach(function(g){for(var q=0;q<Math.max(1,g.adv);q++)adv.push(g.complete?'<span class="w">'+esc(teamName(g.result[q]))+'</span>':'<span class="p">'+(q?ordinal(q+1)+' place, board ':'Winner of board ')+(boardOf[g.id]||'?')+'</span>');});
   lines[2]+=2.4+Math.ceil(adv.length/3);
   colR='<section class="dbk-sec"><h3>Advancing to the '+esc(roundName(cfg,2).toLowerCase())+'</h3><div class="dbk-adv">'+adv.join('')+'</div></section>'+colR;
   var mr=(S.rooms||[]).map(function(r,ix){return ix;}).filter(function(ix){return(S.rooms[ix].boards||0)>0;}),mw=0,mhh=0;
@@ -1586,22 +1592,23 @@ function renderStandings(){
   var cl=function(c){var d=CATS.filter(function(x){return x.id===c;})[0];return d?d.label:c;};
   var td=function(n){return'<td'+(n?'':' class="z"')+'>'+n+'</td>';};
   var side='<aside class="st-side"><h4>Groups</h4><div class="st-key"><span><i style="background:var(--adv-soft)"></i>Byes, ranked 1 to '+E.byes+'</span><span><i style="background:var(--hwang-soft)"></i>Resurrection, '+(E.byes+1)+' to '+E.qualifiers+'</span>'+(S.enosh.on?'<span><i style="background:var(--accent-soft)"></i>Enosh Cup, '+(E.qualifiers+1)+' to '+rows.length+'</span>':'')+'</div>'
-    +'<h4>Teams per category</h4><table class="cnt"><thead><tr><th>Category</th><th>Byes</th><th>Res.</th>'+(S.enosh.on?'<th>Enosh</th>':'')+'<th>Total</th></tr></thead><tbody>'
+    +'<h4>Teams per category</h4><table class="cnt"><thead><tr><th>Category</th><th>Byes</th><th>Res.</th>'+(S.enosh.on?'<th>Enosh</th>':'')+'</tr></thead><tbody>'
     +order.map(function(c){var v=cnt[c],d=CATS.filter(function(x){return x.id===c;})[0],split=!!(d&&d.split&&S.cats[c]&&S.cats[c].split);
-      var row='<tr'+(split?' class="cat-h"':'')+'><td>'+(split?'':gdot(c))+esc(cl(c))+'</td>'+td(v[0])+td(v[1])+(S.enosh.on?td(v[2]):'')+'<td>'+(v[0]+v[1]+v[2])+'</td></tr>';
-      if(split)row+=d.split.map(function(x){var w=sc[x.k]||[0,0,0];return'<tr class="sub"><td>'+gdot(x.k)+esc(x.label)+'</td>'+td(w[0])+td(w[1])+(S.enosh.on?td(w[2]):'')+'<td>'+(w[0]+w[1]+w[2])+'</td></tr>';}).join('');
+      var row='<tr'+(split?' class="cat-h"':'')+'><td>'+(split?'':gdot(c))+esc(cl(c))+'</td>'+td(v[0])+td(v[1])+(S.enosh.on?td(v[2]):'')+'</tr>';
+      if(split)row+=d.split.map(function(x){var w=sc[x.k]||[0,0,0];return'<tr class="sub"><td>'+gdot(x.k)+esc(x.label)+'</td>'+td(w[0])+td(w[1])+(S.enosh.on?td(w[2]):'')+'</tr>';}).join('');
       return row;}).join('')
-    +'</tbody><tfoot><tr><td>Total</td><td>'+tot[0]+'</td><td>'+tot[1]+'</td>'+(S.enosh.on?'<td>'+tot[2]+'</td>':'')+'<td>'+rows.length+'</td></tr></tfoot></table></aside>';
+    +'</tbody><tfoot><tr><td>Total</td><td>'+tot[0]+'</td><td>'+tot[1]+'</td>'+(S.enosh.on?'<td>'+tot[2]+'</td>':'')+'</tr></tfoot></table></aside>';
   var wl=[];for(var wr=1;wr<=(S.rr.cfg?S.rr.cfg.R:S.rrRounds);wr++)if(rrWeight(wr)>1)wl.push('Round '+wr+' points count '+wTxt(rrWeight(wr)));
   $('#st-body').innerHTML='<div class="prog"><span>'+(rrComplete()?'Final round robin standings.':'Provisional: '+done+' of '+total+' games scored.')+(wl.length?' '+wl.join(', ')+'.':'')+'</span></div><div class="st-wrap"><div class="tbl-wrap"><table class="st"><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></div>'+side+'</div>';
 }
 function syncElimInputs(){}
 function suggestE(N,f){var out=[];for(var d=1;d<=N&&out.length<4;d++)[f.E-d,f.E+d].forEach(function(e){if(e<5||e>N||out.indexOf(e)>=0||out.length>=4)return;var st=stagesFor(e,f.enSize);if(st&&st.length===2&&e%f.enSize===0)out.push(e);});return out.sort(function(a,b){return a-b;});}
 function suggestR(N,f,even){
-  var pick=function(semisOnly){var out=[];for(var d=1;d<=N&&out.length<4;d++)[f.R-d,f.R+d].forEach(function(r){if(r<3||r>N-f.E||out.indexOf(r)>=0||out.length>=4)return;if(even&&r%f.resSize)return;var w=gamesFor(r,f.resSize),b=N-f.E-r,P=b+w,l=w&&b>=0?ladder(P):null;if(l&&(!semisOnly||l.length===2))out.push(r);});return out;};
+  var pick=function(semisOnly){var out=[];for(var d=1;d<=N&&out.length<4;d++)[f.R-d,f.R+d].forEach(function(r){if(r<3||r>N-f.E||out.indexOf(r)>=0||out.length>=4)return;if(even&&r%f.resSize)return;var w=gamesFor(r,f.resSize),b=N-f.E-r,P=b+w+rbOf(f),l=w&&b>=0?ladder(P):null;if(l&&(!semisOnly||l.length===2))out.push(r);});return out;};
   var o=pick(true);if(!o.length)o=pick(false);return o.sort(function(a,b){return a-b;});
 }
 function evenLad(P){var l=ladder(P);return!!(l&&l.every(function(x){return oddGames(x)===0;}));}
+function semFinal4(P,f){var l=ladder(P);return!!l&&(l[l.length-1][0]===4||(f.semBonus!==false&&bonusOK(l)));}
 function suggestSemis(N,f,which){
   var out=[],cur=which==='R'?f.R:f.E;
   var ok=function(v,semisOnly){
@@ -1609,7 +1616,7 @@ function suggestSemis(N,f,which){
     if(B<0||!W||!splitEven(R,W))return false;
     if(E&&!stagesFor(E,f.enSize))return false;
     if(E&&E<3)return false;
-    var l=ladder(B+W);return evenLad(B+W)&&(!semisOnly||l.length===2);
+    var P2=B+W+rbOf(f),l=ladder(P2);return evenLad(P2)&&(!semisOnly||l.length===2);
   };
   [true,false].forEach(function(so){if(out.length)return;for(var d=1;d<=N&&out.length<4;d++)[cur-d,cur+d].forEach(function(v){if(v<0||v>N||out.indexOf(v)>=0||out.length>=4)return;if(which==='R'&&v<3)return;if(ok(v,so))out.push(v);});});
   return out.sort(function(a,b){return a-b;});
@@ -1637,6 +1644,10 @@ function renderElimDynamic(){
   $('#el-ensz-hint').textContent=En>=3&&En<=4?'One game, so this doesn’t matter.':'';
   $('#el-enbonus').checked=f.enBonus!==false;$('#el-enbonus').closest('label').style.display=enSt0&&bonusOK(enSt0)?'':'none';
   $('#el-ressz-hint').textContent='';
+  var P0=B+W,P1=P0+1,showRB=!!f.resBonus||(B>=0&&W>0&&!evenLad(P0)&&evenLad(P1));
+  $('#el-resbonus').checked=!!f.resBonus;$('#el-resbonus').closest('label').style.display=showRB?'':'none';
+  var labM=B>=0&&W?ladder(B+W+rbOf(f)):null;
+  $('#el-sembonus').checked=f.semBonus!==false;$('#el-sembonus').closest('label').style.display=labM&&bonusOK(labM)?'':'none';
   var fl=[],enSt=stagesFor(En,f.enSize),resSz=W?splitEven(R,W):null,main=fmtMain();
   // 1. Enosh
   if(En===0)fl.push('<div class="meh"><b class="t">Enosh Cup</b>No Enosh Cup. Every team plays in the main bracket.</div>');
@@ -1649,18 +1660,21 @@ function renderElimDynamic(){
   else if(R<3)fl.push('<div class="bad"><b class="t">Resurrection</b>Put at least 3 teams in the Resurrection. Try:'+tryBtns(suggestR(N,f),'el-res-set')+'</div>');
   else if(!resSz)fl.push('<div class="bad"><b class="t">Resurrection</b>'+R+' teams can’t be split into games of 3 or 4. Try:'+tryBtns(suggestR(N,f),'el-res-set')+'</div>');
   else{var un2=resSz.some(function(x){return x!==f.resSize;});
-    fl.push('<div class="'+(un2?'meh':'ok')+'"><b class="t">Resurrection</b>'+R+' teams → '+W+' game'+(W>1?'s':'')+' ('+resSz.join(' + ')+'), so '+W+' winner'+(W>1?'s':'')+' move on.'+(un2?' '+R+' isn’t a multiple of '+f.resSize+', so not every game has '+f.resSize+' teams.'+(suggestR(N,f,true).length?' For even games, try:'+tryBtns(suggestR(N,f,true),'el-res-set'):''):'')+'</div>');}
+    fl.push('<div class="'+(un2?'meh':'ok')+'"><b class="t">Resurrection</b>'+R+' teams → '+W+' game'+(W>1?'s':'')+' ('+resSz.join(' + ')+'), so '+(W+rbOf(f))+' team'+(W+rbOf(f)>1?'s':'')+' move on'+(rbOf(f)?' (each winner, plus 2nd place from the top-ranked game)':'')+'.'+(un2?' '+R+' isn’t a multiple of '+f.resSize+', so not every game has '+f.resSize+' teams.'+(suggestR(N,f,true).length?' For even games, try:'+tryBtns(suggestR(N,f,true),'el-res-set'):''):'')+'</div>');}
   // 3. Byes and semifinals
-  if(B>=0&&resSz){var P=B+W,lad=ladder(P);
+  if(B>=0&&resSz){var rbv=rbOf(f),P=B+W+rbv,lad=ladder(P);
     var sR=suggestSemis(N,f,'R'),sE=suggestSemis(N,f,'E');
     var fix=(sR.length?' Change the Resurrection to:'+tryBtns(sR,'el-res-set'):'')+(sE.length?(sR.length?' or the Enosh Cup to:':' Change the Enosh Cup to:')+tryBtns(sE,'el-en-set'):'');
-    var pre=B+' bye'+(B===1?'':'s')+' + '+W+' Resurrection winner'+(W>1?'s':'')+' = '+P+' teams';
-    if(lad&&evenLad(P))fl.push('<div class="ok"><b class="t">Semifinals</b>'+pre+' → '+stageTxt(lad)+'.</div>');
-    else if(lad)fl.push('<div class="meh"><b class="t">Semifinals</b>'+pre+' → '+stageTxt(lad)+'. '+P+' teams can’t be split into equal games of 3 or 4 that lead to one final, so the semifinal games aren’t all the same size. Ideally the semifinals have 9, 12 or 16 teams.'+(fix||' No nearby numbers fix this, so try changing the teams per game.')+'</div>');
+    var pre=B+' bye'+(B===1?'':'s')+' + '+W+' Resurrection winner'+(W>1?'s':'')+(rbv?' + 1 runner-up':'')+' = '+P+' teams';
+    var fixRB=!rbv&&W&&evenLad(P+1)&&!evenLad(P)?' Or let the top-ranked Resurrection game send its top 2:<span class="elx-try"><button class="btn sm" data-action="el-resbonus-on" style="margin:0">Send top 2</button></span>':'';
+    fix+=fixRB;
+    var semTxt=lad?(f.semBonus!==false&&bonusOK(lad)?stageTxt(lad.slice(0,-1))+' → final of 4 (the top-ranked semifinal sends its top 2)':stageTxt(lad)):'';
+    if(lad&&evenLad(P))fl.push('<div class="'+(rbv||(f.semBonus!==false&&bonusOK(lad))?'meh':'ok')+'"><b class="t">Semifinals</b>'+pre+' → '+semTxt+'.'+(rbv?' The top-ranked Resurrection game sends its top 2 to make this work.':'')+'</div>');
+    else if(lad)fl.push('<div class="meh"><b class="t">Semifinals</b>'+pre+' → '+semTxt+'. '+P+' teams can’t be split into equal games of 3 or 4 that lead to one final, so the semifinal games aren’t all the same size. Ideally the semifinals have 9, 12 or 16 teams.'+(fix||' No nearby numbers fix this, so try changing the teams per game.')+'</div>');
     else fl.push('<div class="bad"><b class="t">Semifinals</b>'+pre+', which can’t be played down to one final in games of 3 or 4. Ideally the semifinals have 9, 12 or 16 teams.'+(fix||' Change the Resurrection to:'+tryBtns(suggestR(N,f),'el-res-set'))+'</div>');}
   var flH=fl.join(''),flEl=$('#el-flow');if(flEl._h!==flH){flEl.innerHTML=flH;flEl._h=flH;}
   var rec='';
-  if(d){var df={E:d.E,R:d.R};var same=d.E===En&&d.R===R&&f.resSize===(d.R/d.W>=3.5?4:3);
+  if(d){var df={E:d.E,R:d.R};var same=d.E===En&&d.R===R&&f.resSize===(d.R/d.W>=3.5?4:3)&&!!d.rb===!!f.resBonus;
     rec='<span class="hint">Recommended for '+N+' teams: <b>'+d.E+'</b> in the Enosh Cup, <b>'+d.R+'</b> in the Resurrection ('+splitEven(d.R,d.W).join(' + ')+'), <b>'+d.B+'</b> byes.'+(same?' This is what you have.':'')+'</span>'+(same?'':'<button class="btn sm" data-action="el-rec" style="margin:0">Use recommended</button>');}
   if(B>=0)rec='<span class="hint" style="flex-basis:100%">'+En+' in the Enosh Cup + '+R+' in the Resurrection + '+B+' byes = <b>'+N+' teams</b>, the total in Teams above.'+(assignGap()>0?' <span style="color:var(--hwang)">Only '+teamList().length+' teams have a category so far.</span>':assignGap()<0?' <span style="color:var(--hong)">'+teamList().length+' teams have a category, more than the total.</span>':'')+'</span>'+rec;
   var recEl=$('#el-rec');if(recEl._h!==rec){recEl.innerHTML=rec;recEl._h=rec;}
@@ -1702,7 +1716,7 @@ function planTable(plan,cfg){
   plan.main.forEach(function(m,i){
     var r=i+1,parts=[];
     if(r>=2){parts.push(plan.main[r-2].adv+' advance');if(r===2&&cfg.B)parts.push(cfg.resur?cfg.B+' skipped the Resurrection':cfg.B+' bye'+(cfg.B>1?'s':''));if(cfg.dbl&&r===cfg.j)parts.push(cfg.X+' return');}
-    var rule=r===cfg.R?(cfg.pre==='E'?'Winner takes the Enosh Cup':'Winner is champion'):(cfg.resur&&r===1?'Only the winner of each game advances; the rest are out':(m.a===1?(m.advPer?'Winner of each game advances, plus 2nd place from the top-ranked game':'Winner of each game advances; the rest are out'):('Top '+m.a+' of each game advance'+(cfg.dbl&&r<cfg.j?'; the rest drop to the losers bracket':'; the rest are out'))));
+    var rule=r===cfg.R?(cfg.pre==='E'?'Winner takes the Enosh Cup':'Winner is champion'):(cfg.resur&&r===1?(m.advPer?'Winner of each game advances, plus 2nd place from the top-ranked game; the rest are out':'Only the winner of each game advances; the rest are out'):(m.a===1?(m.advPer?'Winner of each game advances, plus 2nd place from the top-ranked game':'Winner of each game advances; the rest are out'):('Top '+m.a+' of each game advance'+(cfg.dbl&&r<cfg.j?'; the rest drop to the losers bracket':'; the rest are out'))));
     rows+='<tr><th scope="row">'+roundName(cfg,r)+'</th><td>'+m.p+' teams'+(parts.length?' <small>('+parts.join(', ')+')</small>':'')+'</td><td>'+m.sizes.length+' game'+(m.sizes.length>1?'s':'')+' ('+m.sizes.join(' + ')+')</td><td>'+rule+'</td></tr>';
   });
   plan.lb.forEach(function(m,i){
@@ -1939,6 +1953,7 @@ document.addEventListener('click',function(e){
   else if(a==='rr-rounds'){S.rrRounds=+el.dataset.v;syncSetupInputs();setupChanged();}
   else if(a==='rr-size'){var PD={3:[5,2,0,0,0],4:[5,2,1,0,0]},ov=S.rrSize,nv2=+el.dataset.v;if(PD[ov]&&PD[nv2]&&S.points.slice(0,4).join()===PD[ov].slice(0,4).join())S.points=PD[nv2].slice();S.rrSize=nv2;syncSetupInputs();setupChanged();if(S.targetTeams>=3){autoBoards(S.targetTeams);renderRooms();renderFixed();save();renderRR();renderBracket();renderBoardCheck();}}
   else if(a==='rule-p'||a==='rule-x'||a==='rule-w'){S.rules=S.rules||{};var rk2=el.dataset.k,cur=ruleOf(rk2);if(a==='rule-p')cur.p=+el.dataset.v;else if(a==='rule-w')cur.w=+el.dataset.v;else cur.x=el.dataset.v;S.rules[rk2]=cur;save();renderRules();renderRR();renderStandings();renderBracket();renderNav();}
+  else if(a==='el-resbonus-on'){E.fmt.resBonus=true;afterElimStructure(true);}
   else if(a==='el-rec'){applyDefaults(fieldN());afterElimStructure(true);}
   else if(a==='el-ensz'){E.fmt.enSize=+el.dataset.v;afterElimStructure(true);}
   else if(a==='el-ressz'){E.fmt.resSize=+el.dataset.v;afterElimStructure(true);}
@@ -2104,6 +2119,8 @@ document.addEventListener('change',function(e){
   else if(/^pt-\d$/.test(id)){S.points[+id.slice(3)]=clamp(t.value,0,999);t.value=S.points[+id.slice(3)];save();renderRR();renderStandings();renderBracket();renderNav();}
   else if(id==='el-q'){E.qualifiers=+t.value;afterElimStructure(true);}
   else if(id==='el-r'){var was=E.rejoin===E.rounds;E.rounds=clamp(t.value,1,6);if(was||E.rejoin>E.rounds)E.rejoin=E.rounds;afterElimStructure(true);}
+  else if(id==='el-resbonus'){E.fmt.resBonus=t.checked;afterElimStructure(true);}
+  else if(id==='el-sembonus'){E.fmt.semBonus=t.checked;afterElimStructure(true);}
   else if(id==='el-enbonus'){E.fmt.enBonus=t.checked;afterElimStructure(true);}
   else if(id==='el-en'){E.fmt.E=clamp(t.value,0,fieldN());afterElimStructure(true);}
   else if(id==='el-res'){E.fmt.R=clamp(t.value,0,fieldN());afterElimStructure(true);}
