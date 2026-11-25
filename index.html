@@ -137,8 +137,15 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .prog{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .bar{flex:1;max-width:320px;height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--adv)}
-.rr-round{margin-top:18px}
-.rr-round h3{font:600 15px var(--font-display);display:flex;gap:10px;align-items:baseline;margin-bottom:8px}
+.rr-round{margin-top:18px;padding:14px 16px 16px;border-radius:12px;background:var(--rt,transparent);border:1px solid var(--rb,var(--line));border-left:6px solid var(--ra,var(--line))}
+.rr-round.r1{--rt:#eef3fb;--rb:#cfdcf1;--ra:#3b6fc4}
+.rr-round.r2{--rt:#fbf3e6;--rb:#ecd8b6;--ra:#c98a1b}
+.rr-round.r3{--rt:#f1ecfa;--rb:#d9cdef;--ra:#7b56c9}
+.rr-round h3{color:var(--ra,var(--ink))}
+.rr-round h3 .btn{font:500 12px var(--font-body);color:var(--ink);margin:0}
+.rr-round h3 .btn.danger{color:var(--hong)}
+.rr-round h3{flex-wrap:wrap;row-gap:6px}
+.rr-round h3{font:700 17px var(--font-display);display:flex;gap:10px;align-items:baseline;margin-bottom:8px}
 .rr-round h3 span{font:400 12px var(--font-body);color:var(--muted)}
 .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
 .gc{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding-bottom:6px;min-width:0}
@@ -207,6 +214,8 @@ table{border-collapse:collapse;width:100%}
 .bcol{display:flex;flex-direction:column;gap:10px;min-width:0}
 .bcol h4{font:600 13px var(--font-body);display:flex;justify-content:space-between;gap:8px}
 .bcol h4 small{font-weight:400}
+.bclr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:-2px 0 8px;font-size:12px}
+.bclr .btn{margin:0;padding:3px 9px;font-size:12px}
 .bgames{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:14px}
 .gcard{position:relative;z-index:1;background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
 .gcard.done{border-color:var(--adv)}
@@ -364,6 +373,10 @@ svg.lines{position:absolute;left:0;top:0;pointer-events:none;z-index:0;overflow:
 .gc.lockd .pill.pick{cursor:not-allowed;opacity:.6}
 select.cgsel{background-color:color-mix(in srgb,var(--cg) 22%,var(--surface));border-color:color-mix(in srgb,var(--cg) 60%,transparent);border-left:5px solid var(--cg);font-weight:600}
 select option[class*="cg-"]{background:color-mix(in srgb,var(--cg) 22%,var(--surface));color:var(--ink)}
+.ovr{display:inline-flex;padding:7px 12px;border:1.5px solid var(--hong);border-radius:8px;background:var(--hong-soft);color:var(--hong)}
+.ovr input{accent-color:var(--hong)}
+.ovr:has(input:checked){background:var(--hong);color:#fff}
+.ovr:has(input:checked) input{accent-color:#fff}
 .nm-h{grid-column:1/-1;font-size:12px;font-weight:600;color:var(--muted);margin-top:8px}
 .nm-h:first-child{margin-top:0}
 .chip.res{background:var(--hwang-soft);color:var(--hwang)}
@@ -396,7 +409,7 @@ select option[class*="cg-"]{background:color-mix(in srgb,var(--cg) 22%,var(--sur
       <div class="sub-h" style="margin-top:4px">Teams</div>
       <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="field" style="max-width:240px;flex:1 1 200px"><label for="in-total">Total teams</label><input id="in-total" type="number" min="3" max="100" inputmode="numeric"></div><button class="btn sm" data-action="fill-cats" style="margin:0 0 4px">(Testing) Fill In Categories</button></div>
       <p class="hint" id="team-note" style="margin:6px 0 8px"></p>
-      <label class="cat-sp" style="margin:0 0 16px"><input type="checkbox" id="in-override"><b>Emergency override:</b>&nbsp;allow a total that isn’t a multiple of the teams per game</label>
+      <label class="cat-sp ovr" style="margin:0 0 16px"><input type="checkbox" id="in-override"><b>Emergency override:</b>&nbsp;allow a total that isn’t a multiple of the teams per game</label>
       <p class="hint" style="margin-bottom:8px">Then enter how many teams each category has. Teams are named automatically, and each category is a group for matchups.</p>
       <div class="cats" id="cats"></div>
       <p class="assign" id="assign-status" role="status" style="margin-bottom:18px"></p>
@@ -462,7 +475,7 @@ select option[class*="cg-"]{background:color-mix(in srgb,var(--cg) 22%,var(--sur
       <div class="rules" id="rules"></div>
 
       <div class="sub-h" style="margin-top:26px">Backup</div>
-      <p class="hint">A backup file holds everything on this page: teams, names, settings, boards, scores and bracket results. Download one before the event and after each round, then restore it here on any device if something gets lost.</p>
+      <p class="hint">A backup file holds everything on this page: teams, names, settings, boards, scores and bracket results. Download one before the event and after each round. To load one, use Restore from backup at the top of the page.</p>
       <div class="actions" id="backup" style="margin-top:10px"></div>
       <input type="file" id="restore-file" accept=".json,application/json" hidden>
     </section>
@@ -495,8 +508,8 @@ select option[class*="cg-"]{background:color-mix(in srgb,var(--cg) 22%,var(--sur
 </div>
 
 <section class="disp" id="display" hidden aria-label="Round robin schedule">
-  <div class="disp-tools"><div class="seg" id="seg-dmode" role="group" aria-label="What to show"><button type="button" data-action="disp-mode" data-v="both">Round robin</button><button type="button" data-action="disp-mode" data-v="bracket">Elimination</button></div><button class="btn" data-action="disp-full">Full screen</button><button class="btn" data-action="disp-exit">Exit projector view</button></div>
-  <header class="disp-h"><div><h1 id="disp-title">Round robin schedule</h1><p id="disp-sub"></p></div><div class="disp-legend" id="disp-legend"></div></header>
+  <div class="disp-tools"><div class="seg" id="seg-dmode" role="group" aria-label="What to show"><button type="button" data-action="disp-mode" data-v="both">Round Robin</button><button type="button" data-action="disp-mode" data-v="bracket">Elimination</button></div><button class="btn" data-action="disp-refresh" id="disp-refresh">Refresh</button><button class="btn" data-action="disp-full">Full screen</button><button class="btn" data-action="disp-exit">Exit projector view</button></div>
+  <header class="disp-h"><div><h1 id="disp-title">Round Robin Schedule</h1><p id="disp-sub"></p></div><div class="disp-legend" id="disp-legend"></div></header>
   <div class="disp-rules" id="disp-rules"></div>
   <div class="disp-main" id="disp-main"><div id="disp-body"></div><div class="disp-maps" id="disp-maps"></div><div id="disp-bracket"></div></div>
 </section>
@@ -1330,14 +1343,18 @@ function renderPointsFields(sizes){
 }
 function renderActions(){
   var c=ui.confirm,msgs={reshuffle:'A new schedule clears every score you entered.',reset:'<b>Start a new tournament?</b> This clears every team, score and setting. Download a backup first if you might need this one again.',regen:'This clears every score you entered.'};
-  $('#actions').innerHTML='<button class="btn danger" data-action="reset">New tournament</button>'+(c?'<span class="confirm" role="dialog"><span>'+msgs[c]+'</span>'+(c==='reset'?'<button class="btn" data-action="bk-download-top">Download backup</button>':'')+'<button class="btn danger" data-action="confirm-yes">'+(c==='reset'?'Start new tournament':'Yes, continue')+'</button><button class="btn" data-action="confirm-no">Cancel</button>'+(c==='reset'&&ui.topBk?'<span class="hint" style="flex-basis:100%;color:var(--adv)">Backup downloaded.</span>':'')+'</span>':'');
+  var rp='';
+  if(ui.popMsg&&!c)rp='<span class="confirm" role="dialog"><span><b>The projector window was blocked.</b> Click the pop-up icon at the right end of Chrome’s address bar, choose “Always allow pop-ups” for this site, then press Projector view again.</span><button class="btn" data-action="pop-close">OK</button><button class="btn" data-action="pop-here">Open in this tab instead</button></span>';
+  if(!c&&ui.bkTop&&(ui.restore||ui.bkMsg)){var r=ui.restore;
+    rp='<span class="confirm" role="dialog">'+(r?'<span>Replace what is on this page with the backup'+(r.savedAt?' from '+esc(fmtTime(r.savedAt)):'')+'? The current tournament is kept, so you can switch back.</span><button class="btn danger" data-action="bk-yes">Yes, restore</button><button class="btn" data-action="bk-no">Cancel</button>':'<span>'+esc(ui.bkMsg)+'</span><button class="btn" data-action="bk-close">OK</button>')+'</span>';}
+  $('#actions').innerHTML='<button class="btn" data-action="bk-restore-top">Restore from backup</button><button class="btn danger" data-action="reset">New tournament</button>'+rp+(c?'<span class="confirm" role="dialog"><span>'+msgs[c]+'</span>'+(c==='reset'?'<button class="btn" data-action="bk-download-top">Download backup</button>':'')+'<button class="btn danger" data-action="confirm-yes">'+(c==='reset'?'Start new tournament':'Yes, continue')+'</button><button class="btn" data-action="confirm-no">Cancel</button>'+(c==='reset'&&ui.topBk?'<span class="hint" style="flex-basis:100%;color:var(--adv)">Backup downloaded.</span>':'')+'</span>':'');
 }
 function renderBackup(){
   var r=ui.restore,prev=readPrev(),h='';
   if(r){
     h='<span class="confirm"><span>Replace what is on this page with the backup'+(r.savedAt?' from '+esc(fmtTime(r.savedAt)):'')+'? The current tournament is kept, so you can switch back.</span><button class="btn danger" data-action="bk-yes">Yes, restore</button><button class="btn" data-action="bk-no">Cancel</button></span>';
   }else{
-    h='<button class="btn primary" data-action="bk-download">Download backup</button><button class="btn" data-action="bk-restore">Restore from backup</button>';
+    h='<button class="btn primary" data-action="bk-download">Download backup</button>';
     if(prev)h+='<button class="btn" data-action="bk-undo">Bring back the tournament replaced '+esc(fmtTime(prev.savedAt))+'</button>';
   }
   if(ui.bkMsg)h+='<span class="hint" role="status">'+esc(ui.bkMsg)+'</span>';
@@ -1359,9 +1376,9 @@ function readBackupFile(file){
       if(!st||typeof st!=='object'||!st.rr||!(st.cats||st.numTeams))throw 0;
       ui.restore={state:st,savedAt:o.savedAt||null};ui.bkMsg='';
     }catch(e){ui.restore=null;ui.bkMsg='That file is not a Yut tournament backup. Choose a file named like yut-tournament-backup-….json.';}
-    renderBackup();
+    renderBackup();renderActions();
   };
-  fr.onerror=function(){ui.bkMsg='The file could not be read. Try choosing it again.';renderBackup();};
+  fr.onerror=function(){ui.bkMsg='The file could not be read. Try choosing it again.';renderBackup();renderActions();};
   fr.readAsText(file);
 }
 function applyState(st){
@@ -1382,6 +1399,22 @@ function renderRRTools(){
     +(mod?'<button class="btn" data-action="rr-restore">Restore original matchups</button>':'')
     +(ui.rrEdit?'<span class="hint">Click a team, then a team in another game of the same round to swap them. Games that already have a result are locked.</span>':'')
     +(ui.rrMsg?'<span class="hint" style="color:var(--hong)">'+esc(ui.rrMsg)+'</span>':'');
+}
+function brKeysFrom(rk){var P=rk.charAt(0),n=+rk.slice(1);return Object.keys(S.elim.results||{}).filter(function(k){var m=/^([A-Z])(\d+)-/.exec(k);return m&&m[1]===P&&+m[2]>=n;});}
+function brClearBtn(rd,name){
+  var rk=rd.rk,any=rd.games.some(function(g){return g.draft.some(function(v){return v!=null;});});
+  if(ui.brClearRk===rk){var later=brKeysFrom(rk).some(function(k){return k.indexOf(rk+'-')!==0&&(S.elim.results[k]||[]).some(function(v){return v!=null;});});
+    return'<div class="bclr"><span>Clear every result in '+esc(name)+(later?' and the rounds after it':'')+'?</span><button class="btn danger" data-action="brr-clear-yes" data-rk="'+rk+'">Yes, clear</button><button class="btn" data-action="brr-clear-no">Cancel</button></div>';}
+  var h=any?'<button class="btn" data-action="brr-clear" data-rk="'+rk+'">Clear '+esc(name)+'</button>':'';
+  if(ui.brUndoRk&&ui.brUndoRk.rk===rk)h+='<button class="btn" data-action="brr-clear-undo">Undo clear</button>';
+  return h?'<div class="bclr">'+h+'</div>':'';
+}
+function rrClearBtn(r,list){
+  var any=list.some(function(g){return(S.rr.results[g.id]||[]).some(function(v){return v!=null;});});
+  if(ui.rrClearR===r)return'<span class="confirm" style="display:inline-flex;gap:6px;align-items:center;font:400 13px var(--font-body);color:var(--ink)">Clear every score in Round '+r+'?<button class="btn sm danger" data-action="rr-clear-yes" data-round="'+r+'" style="margin:0">Yes, clear</button><button class="btn sm" data-action="rr-clear-no" style="margin:0">Cancel</button></span>';
+  var h=any?'<button class="btn sm" data-action="rr-clear-round" data-round="'+r+'">Clear round '+r+'</button>':'';
+  if(ui.rrUndoClear&&ui.rrUndoClear.r===r)h+='<button class="btn sm" data-action="rr-clear-undo" data-round="'+r+'">Undo clear</button>';
+  return h;
 }
 function rrCard(g,dn){
   dn=dn||g.num;
@@ -1434,7 +1467,7 @@ function renderRR(){
     var off=0;
     $('#rr-body').innerHTML=Object.keys(rounds).map(function(r){
       var list=rounds[r].slice().sort(function(a,b){return(boardOf[a.id]||0)-(boardOf[b.id]||0);}),rd=list.filter(function(g){return isComplete(resOf(g),g.teams.length);}).length,base=off;off+=list.length;
-      return'<section class="rr-round"><h3>Round '+r+'<span class="rl">'+esc(ruleTxt('rr'+r))+'</span><span>'+rd+' of '+list.length+' scored</span><button class="btn sm" data-action="rr-random" data-round="'+r+'">(Testing) Randomly Fill Out</button></h3><div class="games">'+list.map(function(g,ix){return rrCard(g,base+ix+1);}).join('')+'</div></section>';
+      return'<section class="rr-round r'+(((+r)-1)%3+1)+'"><h3>Round '+r+'<span class="rl">'+esc(ruleTxt('rr'+r))+'</span><span>'+rd+' of '+list.length+' scored</span><button class="btn sm" data-action="rr-random" data-round="'+r+'">(Testing) Randomly Fill Out</button>'+rrClearBtn(+r,list)+'</h3><div class="games">'+list.map(function(g,ix){return rrCard(g,base+ix+1);}).join('')+'</div></section>';
     }).join('');
     if(!gs.length)$('#rr-body').innerHTML='<p class="empty">'+(unevenBlocked()?'No schedule yet: the team count needs the emergency override (see the note above).':'The schedule appears here once your teams are set up in Setup.')+'</p>';
   });
@@ -1453,7 +1486,7 @@ function renderDisplay(){
   var dm='both';try{dm=localStorage.getItem('yut-disp-mode')||'both';}catch(x){}
   if(dm!=='bracket')dm='both';
   $('#disp-main').className='disp-main m-'+dm;
-  $('#disp-title').textContent=dm==='bracket'?'Elimination stage':dm==='map'?'Where the boards are':'Round robin schedule';
+  $('#disp-title').textContent=dm==='bracket'?'Elimination Stage':'Round Robin Schedule';
   $$('#seg-dmode button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.v===dm));});
   var dr=$('#disp-rules');
   if(dm==='bracket'){dr.innerHTML='';renderDispBracket();return;}
@@ -1735,7 +1768,7 @@ function renderBracket(){
   lastEnosh=ebr;
   function nm(g){return g.prefix==='L'?'Losers round '+g.round:roundName(g.prefix==='E'?ec.cfg:cfg,g.round);}
   var hasLay=Object.keys(S.elim.layout||{}).length>0;
-  $('#br-tools').innerHTML='<button class="btn'+(ui.edit?' primary':'')+'" data-action="edit-toggle">'+(ui.edit?'Done editing matchups':'Edit matchups')+'</button>'+((ui.undoBr||[]).length?'<button class="btn" data-action="br-undo">Undo</button>':'')+(hasLay?'<button class="btn" data-action="edit-reset">Restore automatic matchups</button>':'')+(Object.keys(S.elim.adv||{}).length?'<button class="btn" data-action="adv-reset">Reset advancement changes</button>':'')+(ui.edit?'<span class="hint">Click a team, then a team in another game of the same round to swap them, or use Move selected team here to shift one team over (games keep 3 to 5 teams). Games that already have a result are locked.</span>':'');
+  $('#br-tools').innerHTML='<button class="btn'+(ui.edit?' primary':'')+'" data-action="edit-toggle">'+(ui.edit?'Done editing matchups':'Edit matchups')+'</button>'+((ui.undoBr||[]).length?'<button class="btn" data-action="br-undo">Undo</button>':'')+(ui.brClear?'<span class="confirm" style="display:inline-flex;gap:8px;align-items:center"><span>Clear every result in the bracket and the Enosh Cup?</span><button class="btn danger" data-action="br-clear-yes">Yes, clear</button><button class="btn" data-action="br-clear-no">Cancel</button></span>':(Object.keys(S.elim.results||{}).some(function(k){return(S.elim.results[k]||[]).some(function(v){return v!=null;});})?'<button class="btn" data-action="br-clear-all">Clear all results</button>':''))+(ui.brCleared?'<button class="btn" data-action="br-clear-undo">Undo clear</button>':'')+(hasLay?'<button class="btn" data-action="edit-reset">Restore automatic matchups</button>':'')+(Object.keys(S.elim.adv||{}).length?'<button class="btn" data-action="adv-reset">Reset advancement changes</button>':'')+(ui.edit?'<span class="hint">Click a team, then a team in another game of the same round to swap them, or use Move selected team here to shift one team over (games keep 3 to 5 teams). Games that already have a result are locked.</span>':'');
   var pm={},pl={},pe={},cols=1;
   for(var rr=1;rr<=cfg.R;rr++){
     pm[rr]=rr===1?1:Math.max(pm[rr-1]+1,(cfg.dbl&&rr===cfg.j)?pl[cfg.j-1]+1:0);
@@ -1776,7 +1809,7 @@ function renderBracket(){
       var teams=rd.games.reduce(function(a,g){return a+g.size;},0);
       var byeCard='';
       if(rd.round===1&&rd.byes.length)byeCard='<article class="gcard byec" data-game="BYE"><header><b>'+(cfg.resur?'Skip the Resurrection':'Byes')+'</b><span>Start in '+(cfg.resur?roundName(cfg,2):'round 2')+'</span></header>'+rd.byes.map(function(t,k){return'<div class="slot cg-'+(teamGroups()[t]||'x')+'"><div><span class="nm">'+esc(teamName(t))+'</span><small>#'+(k+1)+' seed</small></div></div>';}).join('')+'</article>';
-      h+='<div class="bcol" style="grid-column:'+pm[rd.round]+';grid-row:3"><h4>'+roundName(cfg,rd.round)+'<span class="rl">'+esc(ruleTxt('M'+rd.round))+'</span><small>'+teams+' teams</small></h4><div class="bgames">'+byeCard+rd.games.map(function(g){return gameCard(g,locked);}).join('')+'</div></div>';
+      h+='<div class="bcol" style="grid-column:'+pm[rd.round]+';grid-row:3"><h4>'+roundName(cfg,rd.round)+'<span class="rl">'+esc(ruleTxt('M'+rd.round))+'</span><small>'+teams+' teams</small></h4>'+brClearBtn(rd,roundName(cfg,rd.round))+'<div class="bgames">'+byeCard+rd.games.map(function(g){return gameCard(g,locked);}).join('')+'</div></div>';
     });
     if(cfg.dbl&&br.lb.length){
       h+='<div class="bt lb" style="grid-column:1/-1;grid-row:4">Losers bracket <small>Top '+cfg.X+' return to round '+cfg.j+'</small></div>';
@@ -1789,7 +1822,7 @@ function renderBracket(){
       h+='<div class="bt en" style="grid-column:1/-1;grid-row:6">Enosh Cup <small>Teams ranked '+(cfg.T+1)+' to '+(cfg.T+ec.cfg.T)+'</small></div>';
       ebr.main.forEach(function(rd){
         var teams=rd.games.reduce(function(a,g){return a+g.size;},0);
-        h+='<div class="bcol" style="grid-column:'+pe[rd.round]+';grid-row:7"><h4>'+roundName(ec.cfg,rd.round)+'<span class="rl">'+esc(ruleTxt('E'+rd.round))+'</span><small>'+teams+' teams</small></h4><div class="bgames">'+rd.games.map(function(g){return gameCard(g,locked);}).join('')+'</div></div>';
+        h+='<div class="bcol" style="grid-column:'+pe[rd.round]+';grid-row:7"><h4>'+roundName(ec.cfg,rd.round)+'<span class="rl">'+esc(ruleTxt('E'+rd.round))+'</span><small>'+teams+' teams</small></h4>'+brClearBtn(rd,roundName(ec.cfg,rd.round))+'<div class="bgames">'+rd.games.map(function(g){return gameCard(g,locked);}).join('')+'</div></div>';
       });
     }
     host.innerHTML=h+'</div>';
@@ -1835,7 +1868,7 @@ function syncSetupInputs(){
 function renderAll(){
   normalizeElim();renderSummary();renderRules();renderActions();renderBackup();renderRR();renderStandings();syncElimInputs();renderElimDynamic();renderPlanSummary();renderBracket();renderNav();
 }
-function afterScores(){save();renderRR();renderStandings();renderBracket();renderNav();}
+function afterScores(){ui.brCleared=null;ui.rrUndoClear=null;ui.brUndoRk=null;save();renderRR();renderStandings();renderBracket();renderNav();}
 function afterElimStructure(clear){
   if(clear){S.elim.results={};S.elim.layout={};S.elim.stations={};S.elim.boards={};S.elim.adv={};S.elim.pinOff={};ui.sel=null;}
   normalizeElim();save();syncElimInputs();renderElimDynamic();renderPlanSummary();renderStandings();renderBracket();renderBoardCheck();renderRules();renderNav();
@@ -1890,7 +1923,15 @@ document.addEventListener('click',function(e){
   var el=e.target.closest('[data-action]');if(!el)return;
   var a=el.dataset.action,E=S.elim;
   if(a==='go'){var t=document.getElementById(el.dataset.target);if(t)t.scrollIntoView({block:'start'});}
-  else if(a==='disp-open'){var w=window.open(location.href.split('#')[0]+'#display','yut-display');if(!w)location.hash='display';}
+  else if(a==='disp-open'){
+    try{localStorage.setItem('yut-disp-mode','both');}catch(x){}
+    var sw=window.screen||{},W=Math.max(900,Math.min(sw.availWidth||1280,1600)),H=Math.max(600,Math.min(sw.availHeight||800,1000));
+    var w=window.open(location.href.split('#')[0]+'#display','yut-display','popup=yes,width='+W+',height='+H+',left=40,top=40');
+    if(w){try{w.focus();}catch(x){}}else{ui.popMsg=true;renderActions();}
+  }
+  else if(a==='pop-here'){ui.popMsg=false;renderActions();location.hash='display';}
+  else if(a==='pop-close'){ui.popMsg=false;renderActions();}
+  else if(a==='disp-refresh'){S=load();renderAll();var rb=$('#disp-refresh');rb.textContent='Updated';setTimeout(function(){rb.textContent='Refresh';},1200);}
   else if(a==='disp-full'){var de=document.documentElement;if(document.fullscreenElement)document.exitFullscreen();else if(de.requestFullscreen)de.requestFullscreen();}
   else if(a==='disp-exit'){if(window.opener&&!window.opener.closed){window.close();}else{history.replaceState(null,'',location.pathname+location.search);setMode();}}
   else if(a==='theme'){var tv=el.dataset.v;try{if(tv==='auto')localStorage.removeItem('yut-theme');else localStorage.setItem('yut-theme',tv);}catch(x){}
@@ -1914,21 +1955,23 @@ document.addEventListener('click',function(e){
   else if(a==='map-del'){var md=ensureMap(S.rooms[ui.mapRoom||0]);if(ui.mapSel&&ui.mapSel.charAt(0)==='i'){md.items.splice(+ui.mapSel.slice(1),1);ui.mapSel=null;mapChanged();}}
   else if(a==='map-reset'){var rr=S.rooms[ui.mapRoom||0],tp=ROOM_TEMPLATES[(rr.name||'').trim().toLowerCase()];rr.map=tp?cloneMap(tp):autoMap(rr.boards||0);ui.mapSel=null;mapChanged();}
   else if(a==='disp-mode'){try{localStorage.setItem('yut-disp-mode',el.dataset.v);}catch(x){}renderDisplay();}
-  else if(a==='pin-add'){var L2=teamList(),pins2=S.pins=S.pins||[],tl=L2.filter(function(t){return!pins2.some(function(q){return q.label===t.label;});})[0],bb=totalBoards();
-    while(bb>0&&pins2.some(function(q){return q.board===bb;}))bb--;
-    if(tl&&bb>0){pins2.push({label:tl.label,board:bb});pinsChanged();}}
+  else if(a==='pin-add'){var L2=teamList(),pins2=S.pins=S.pins||[],tl=L2.filter(function(t){return!pins2.some(function(q){return q.label===t.label;});})[0],tb2=totalBoards(),bb=1;
+    while(bb<=tb2&&pins2.some(function(q){return q.board===bb;}))bb++;
+    if(tl&&bb<=tb2){pins2.push({label:tl.label,board:bb});pinsChanged();}}
   else if(a==='pin-del'){S.pins.splice(+el.dataset.i,1);pinsChanged();}
   else if(a==='room-add'){S.rooms.push({name:'',boards:1});afterRooms(true);}
   else if(a==='room-del'){S.rooms.splice(+el.dataset.i,1);afterRooms(true);}
   else if(a==='e-size'){E.size=+el.dataset.v;afterElimStructure(true);}
   else if(a==='reshuffle'){if(hasScores()){ui.confirm='reshuffle';renderActions();}else{regenerate(true);save();renderAll();}}
-  else if(a==='reset'){ui.confirm='reset';renderActions();}
+  else if(a==='reset'){ui.bkTop=false;ui.restore=null;ui.confirm='reset';renderActions();}
   else if(a==='regen'){if(hasScores())savePrev();ensureNames();regenerate(false);save();renderNames();renderAll();}
   else if(a==='bk-download'){downloadBackup();}
   else if(a==='bk-download-top'){downloadBackup();ui.topBk=true;renderActions();}
-  else if(a==='bk-restore'){ui.bkMsg='';$('#restore-file').click();}
-  else if(a==='bk-no'){ui.restore=null;renderBackup();}
-  else if(a==='bk-yes'){var rs=ui.restore;ui.restore=null;savePrev();applyState(rs.state);ui.bkMsg='Backup restored.';renderBackup();}
+  else if(a==='bk-restore'){ui.bkMsg='';ui.bkTop=false;$('#restore-file').click();}
+  else if(a==='bk-restore-top'){ui.bkMsg='';ui.bkTop=true;ui.confirm=null;$('#restore-file').click();}
+  else if(a==='bk-close'){ui.bkMsg='';ui.bkTop=false;renderActions();}
+  else if(a==='bk-no'){ui.restore=null;ui.bkTop=false;renderBackup();renderActions();}
+  else if(a==='bk-yes'){var rs=ui.restore,wasTop=ui.bkTop;ui.restore=null;ui.bkTop=false;savePrev();applyState(rs.state);ui.bkMsg='Backup restored.';renderBackup();if(wasTop){ui.bkTop=true;renderActions();setTimeout(function(){if(ui.bkMsg==='Backup restored.'){ui.bkTop=false;ui.bkMsg='';renderActions();}},2500);}}
   else if(a==='bk-undo'){var pv=readPrev();if(pv){savePrev();applyState(pv.state);ui.bkMsg='Switched back. Press the button again to undo this.';renderBackup();}}
   else if(a==='confirm-no'){ui.confirm=null;ui.topBk=false;renderActions();}
   else if(a==='confirm-yes'){
@@ -1941,13 +1984,17 @@ document.addEventListener('click',function(e){
       S=blankState();ensureNames();regenerate(true);syncSetupInputs();renderCats();renderNames();renderRooms();renderMapEditor();renderFixed();}
     else{regenerate(true);}
     save();renderAll();
-    if(c==='reset'){syncTheme();window.scrollTo(0,0);ui.bkMsg='New tournament started. The previous one can be brought back with the button above.';renderBackup();}
+    if(c==='reset'){syncTheme();window.scrollTo(0,0);ui.bkMsg='New tournament started. The previous one can be brought back with the Bring back button.';renderBackup();}
   }
   else if(a==='fill-cats'){var NT=S.targetTeams;if(!NT||NT<3){ui.boardMsg='';$('#in-total').focus();return;}fillCats(NT);catsChanged();}
   else if(a==='rr-random-all'){
     (S.rr.games||[]).forEach(function(g){S.rr.results[g.id]=shuffle(g.teams,Math.random);});
     afterScores();
   }
+  else if(a==='rr-clear-round'){ui.rrClearR=+el.dataset.round;renderRR();}
+  else if(a==='rr-clear-no'){ui.rrClearR=null;renderRR();}
+  else if(a==='rr-clear-yes'){var cr=+el.dataset.round,snap={};(S.rr.games||[]).forEach(function(g){if(g.round===cr&&S.rr.results[g.id]){snap[g.id]=S.rr.results[g.id];delete S.rr.results[g.id];}});ui.rrClearR=null;afterScores();ui.rrUndoClear={r:cr,data:snap};renderRR();}
+  else if(a==='rr-clear-undo'){var uc=ui.rrUndoClear;if(uc){Object.keys(uc.data).forEach(function(k){S.rr.results[k]=uc.data[k];});ui.rrUndoClear=null;afterScores();}}
   else if(a==='rr-random'){
     var rn=+el.dataset.round;
     (S.rr.games||[]).forEach(function(g){if(g.round===rn)S.rr.results[g.id]=shuffle(g.teams,Math.random);});
@@ -1961,6 +2008,14 @@ document.addEventListener('click',function(e){
   else if(a==='adv-reset'){S.elim.adv={};save();renderBracket();renderNav();}
   else if(a==='move-here'){moveHere(el);}
   else if(a==='pins-reset'){E.pins=[];E.lbPins=[];afterElimStructure(true);}
+  else if(a==='brr-clear'){ui.brClearRk=el.dataset.rk;renderBracket();}
+  else if(a==='brr-clear-no'){ui.brClearRk=null;renderBracket();}
+  else if(a==='brr-clear-yes'){var rk3=el.dataset.rk,snap3={};brKeysFrom(rk3).forEach(function(k){snap3[k]=S.elim.results[k];delete S.elim.results[k];});ui.brClearRk=null;afterScores();ui.brUndoRk={rk:rk3,data:snap3};renderBracket();}
+  else if(a==='brr-clear-undo'){var u3=ui.brUndoRk;if(u3){Object.keys(u3.data).forEach(function(k){S.elim.results[k]=u3.data[k];});ui.brUndoRk=null;afterScores();}}
+  else if(a==='br-clear-all'){ui.brClear=true;renderBracket();}
+  else if(a==='br-clear-no'){ui.brClear=false;renderBracket();}
+  else if(a==='br-clear-yes'){ui.brClear=false;ui.brCleared=JSON.stringify(S.elim.results||{});S.elim.results={};save();renderBracket();renderNav();}
+  else if(a==='br-clear-undo'){if(ui.brCleared){S.elim.results=JSON.parse(ui.brCleared);ui.brCleared=null;save();renderBracket();renderNav();}}
   else if(a==='br-undo'){var lb=ui.undoBr.pop();if(lb!=null){S.elim.layout=JSON.parse(lb);ui.sel=null;ui.msg='';save();renderBracket();renderNav();}}
   else if(a==='rr-edit'){ui.rrEdit=!ui.rrEdit;ui.rrSel=null;ui.rrMsg='';renderRR();}
   else if(a==='rr-undo'){var lr=ui.undoRR.pop();if(lr!=null){rrApplyTeams(JSON.parse(lr));ui.rrSel=null;ui.rrMsg='';save();renderRR();renderStandings();renderBracket();renderNav();}}
@@ -2070,6 +2125,7 @@ ensureNames();
 if(!S.rr.games||!S.rr.cfg||(isStale()&&!hasScores()))regenerate(false);
 if(S.rr.games&&!S.rr.orig)S.rr.orig=S.rr.games.map(function(g){return g.teams.slice();});
 normalizeElim();
+if(isDisplay()){try{localStorage.setItem('yut-disp-mode','both');}catch(x){}}
 syncSetupInputs();renderCats();renderNames();renderRooms();renderMapEditor();renderFixed();renderAll();setMode();
 })();
 </script>
