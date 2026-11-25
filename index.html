@@ -867,7 +867,7 @@ function load(){
     var raw=localStorage.getItem(KEY);
     if(raw)return mergeState(JSON.parse(raw));
   }catch(e){}
-  return defaultState();
+  return blankState();
 }
 function mergeState(p){
   var d=defaultState(),s=Object.assign(d,p);
