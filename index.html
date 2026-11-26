@@ -125,6 +125,9 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .confirm{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .points{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;max-width:520px}
 .points label{display:flex;flex-direction:column;gap:4px}
+.rename{margin:0 0 18px;max-width:780px;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--surface)}
+.rename summary{cursor:pointer;font-weight:600}
+.rename summary small{font-weight:400;color:var(--muted)}
 .names{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px 14px}
 .nm-field{display:flex;align-items:center;gap:8px}
 .nm-field span{width:22px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -413,7 +416,12 @@ select option[class*="cg-"]{background:color-mix(in srgb,var(--cg) 22%,var(--sur
       <label class="cat-sp ovr" style="margin:0 0 16px"><input type="checkbox" id="in-override"><b>Emergency override:</b>&nbsp;allow a total that isn’t a multiple of the teams per game</label>
       <p class="hint" style="margin-bottom:8px">Then enter how many teams each category has. Teams are named automatically, and each category is a group for matchups.</p>
       <div class="cats" id="cats"></div>
-      <p class="assign" id="assign-status" role="status" style="margin-bottom:18px"></p>
+      <p class="assign" id="assign-status" role="status" style="margin-bottom:12px"></p>
+      <details class="rename" id="rename-box"><summary>Rename teams <small>(optional)</small></summary>
+        <p class="hint" style="margin:8px 0 10px">Each team has an automatic name from its category. Type a new name to rename it; it stays in the same category. Leave a box empty to go back to the automatic name.</p>
+        <div class="names" id="names"></div>
+        <div style="margin-top:10px"><button class="btn sm" data-action="names-reset" style="margin:0">Clear all custom names</button></div>
+      </details>
       <div class="form-grid">
         <div class="field"><span class="lab" id="lb-rounds">Round robin rounds</span>
           <div class="seg" id="seg-rounds" role="group" aria-labelledby="lb-rounds">
@@ -1021,7 +1029,7 @@ function catsChanged(){
 }
 function tdot(i){var g=teamGroups()[i];return g?'<i class="cdot cg-'+g+'" aria-hidden="true"></i>':'';}
 function gdot(k){return'<i class="cdot cg-'+k+'" aria-hidden="true"></i>';}
-function teamName(i){var t=curTeams()[i];if(!t)return'Team '+(i+1);return t.label;}
+function teamName(i){var t=curTeams()[i];if(!t)return'Team '+(i+1);var c=((S.customNames||{})[t.label]||'').trim();return c||t.label;}
 function baseTable(){var G=S.rrSize,t=[];for(var i=0;i<G;i++)t.push(+S.points[i]||0);return t;}
 function adjTable(n){
   var b=baseTable(),G=b.length;if(n===G)return b;
@@ -1174,7 +1182,7 @@ function renderFixed(){
     pins.forEach(function(pn,i){
       var known=L.some(function(t){return t.label===pn.label;}),to='';
       if(!known)to+='<option value="'+esc(pn.label)+'" selected>'+esc(pn.label)+' (not in this tournament)</option>';
-      L.forEach(function(t){var taken=pins.some(function(q,j){return j!==i&&q.label===t.label;});var cn='';to+='<option value="'+esc(t.label)+'"'+(t.label===pn.label?' selected':'')+(taken?' disabled':'')+'>'+esc(cn||t.label)+'</option>';});
+      L.forEach(function(t){var taken=pins.some(function(q,j){return j!==i&&q.label===t.label;});var cn=((S.customNames||{})[t.label]||'').trim();to+='<option value="'+esc(t.label)+'"'+(t.label===pn.label?' selected':'')+(taken?' disabled':'')+'>'+esc(cn||t.label)+'</option>';});
       var bo='';for(var b=1;b<=Math.max(tb,pn.board||1);b++){var taken2=pins.some(function(q,j){return j!==i&&q.board===b;});bo+='<option value="'+b+'"'+(b===pn.board?' selected':'')+(taken2?' disabled':'')+'>'+esc(boardText(b))+'</option>';}
       h+='<div class="pinrow"><select data-pin-team="'+i+'" data-fid="pin-t-'+i+'" aria-label="Team with a fixed board">'+to+'</select><select data-pin-board="'+i+'" data-fid="pin-b-'+i+'" aria-label="Fixed board">'+bo+'</select><button class="link rm" data-action="pin-del" data-i="'+i+'">Remove</button></div>';
     });
@@ -2032,6 +2040,7 @@ document.addEventListener('click',function(e){
   else if(a==='br-clear-yes'){ui.brClear=false;ui.brCleared=JSON.stringify(S.elim.results||{});S.elim.results={};save();renderBracket();renderNav();}
   else if(a==='br-clear-undo'){if(ui.brCleared){S.elim.results=JSON.parse(ui.brCleared);ui.brCleared=null;save();renderBracket();renderNav();}}
   else if(a==='br-undo'){var lb=ui.undoBr.pop();if(lb!=null){S.elim.layout=JSON.parse(lb);ui.sel=null;ui.msg='';save();renderBracket();renderNav();}}
+  else if(a==='names-reset'){S.customNames={};save();renderNames();renderAll();renderFixed();}
   else if(a==='rr-edit'){ui.rrEdit=!ui.rrEdit;ui.rrSel=null;ui.rrMsg='';renderRR();}
   else if(a==='rr-undo'){var lr=ui.undoRR.pop();if(lr!=null){rrApplyTeams(JSON.parse(lr));ui.rrSel=null;ui.rrMsg='';save();renderRR();renderStandings();renderBracket();renderNav();}}
   else if(a==='rr-restore'){ui.undoRR.push(JSON.stringify(S.rr.games.map(function(g){return g.teams;})));rrApplyTeams(S.rr.orig||[]);ui.rrSel=null;ui.rrMsg='';save();renderRR();renderStandings();renderBracket();renderNav();}
